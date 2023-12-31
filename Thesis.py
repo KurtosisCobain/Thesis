@@ -18,7 +18,7 @@ class Dataset:
         self.df = self.df.loc[(self.df.date >= "2020-11-12")]
 
         self.df = DummyOne(self.df)
-        self.df = ReleaseDate(self.df)
+        self.df = ReleaseDate(self.df, self.credentials)
         self.df = DummyTwo(self.df, file_path)
 
 class DummyOne:
@@ -39,6 +39,7 @@ class DummyOne:
             self.df.drop(columns= "artists", inplace= True)
             self.df.insert(2, "artists", artists)
         except Exception as ex:
+            print("Error running replace_artist_names() function...")
             print(ex)
         
     def get_dummy_one(self):
@@ -70,6 +71,7 @@ class DummyOne:
         except Exception as ex:
             result = {"Dummy 1 built successfully": False}
             print(result)
+            print("Error running get_dummy_one() function...")
             print(ex)
 
 class ReleaseDate:
@@ -94,6 +96,7 @@ class ReleaseDate:
         except Exception as ex:
             result = {"Successful request": False}
             print(result)
+            print("Error running get_release_date() function...")
             print(ex)
 
 class RequestAPI:
@@ -102,29 +105,37 @@ class RequestAPI:
         self.client_secret = credentials.get("client_secret")
     
     def get_token(self):
-        auth_string= self.client_id + ':' + self.client_secret
-        auth_bytes = auth_string.encode('utf-8')
-        auth_base64 = str(base64.b64encode(auth_bytes), 'utf-8')
+        try:
+            auth_string= self.client_id + ':' + self.client_secret
+            auth_bytes = auth_string.encode('utf-8')
+            auth_base64 = str(base64.b64encode(auth_bytes), 'utf-8')
 
-        url = 'https://accounts.spotify.com/api/token'
-        headers = {"Authorization" : 'Basic '+ auth_base64,
-                   'Content_type': 'application/x-www-form-urlencoded'}
-        data = {'grant_type': 'client_credentials'}
-        result = post(url, headers = headers, data = data)
-        json_result = json.loads(result.content)
-        token = json_result['access_token']
-        return token
+            url = 'https://accounts.spotify.com/api/token'
+            headers = {"Authorization" : 'Basic '+ auth_base64,
+                    'Content_type': 'application/x-www-form-urlencoded'}
+            data = {'grant_type': 'client_credentials'}
+            result = post(url, headers = headers, data = data)
+            json_result = json.loads(result.content)
+            token = json_result['access_token']
+            return token
+        except Exception as ex:
+            print("Error running get_token() function...")
+            print(ex)
 
     def get_auth_header(self, token):
         return {'Authorization': 'Bearer ' + token}
 
     def get_features(self, token, song_id):
-        url = f'https://api.spotify.com/v1/tracks/{song_id}?market=US'
-        headers = self.get_auth_header(token)
-        result = get(url , headers= headers)
-        self.json_result = json.loads(result.content)
+        try:
+            url = f'https://api.spotify.com/v1/tracks/{song_id}?market=US'
+            headers = self.get_auth_header(token)
+            result = get(url , headers= headers)
+            self.json_result = json.loads(result.content)
 
-        return self.json_result
+            return self.json_result
+        except Exception as ex:
+            print("Error running get_features() function...")
+            print(ex)
     
 class DummyTwo:
     def __init__(self, df, file_path):
@@ -162,4 +173,5 @@ class DummyTwo:
         except Exception as ex:
             result = {"Dummy 2 built successfully": False}
             print(result)
+            print("Error running get_dummy_two() function...")
             print(ex)
